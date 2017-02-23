@@ -10,6 +10,12 @@ require "matrix"
 # Lambda max for nil
 @imax = ->(a) { a.each_with_index.max_by { |e, i| e.nil? ? 0 : e } }
 
+def deparse solution
+  used = solution.reject(&:empty?)
+  lines = used.each_with_index.map { |i, a| "#{i} #{a.join " "}\n" }
+  "#{used.length}\n#{lines}"
+end
+
 lines = File.readlines(ARGV[0])
 
 @num_vid, @num_end, @num_req, @num_cache, @capacity = lines.shift.strip.split.map &:to_i
@@ -74,22 +80,26 @@ def backpack_heuristic
   solution = Array.new(@num_cache) { Array.new }
 
   best_caches.each do |cache|
-    min_size = @sizes.max
+    min_size = @sizes.min
     cap = @capacity
+    taken = Array.new(@num_vid, false)
 
-    puts cap.class, min_size.class
+    #puts cap, min_size
     
     until cap < min_size # que ya no quepan videos
       nxt = @requests.max_by do |h|
-        if @sizes[h[:video]] > cap
+        if @sizes[h[:video]] > cap || @endpoints[h[:endpoint]][cache].nil? || taken[h[:video]]
           0
         else
           (@dc_latencies[h[:endpoint]] - @endpoints[h[:endpoint]][cache]) * h[:reqs] / @sizes[h[:video]]
         end
       end
 
+      #puts "#{nxt} - #{@sizes[nxt[:video]]} (rem: #{cap})"
+
       solution[cache] << nxt[:video]
       cap -= @sizes[nxt[:video]]
+      taken[nxt[:video]] = true
     end
   end
 
@@ -97,7 +107,7 @@ def backpack_heuristic
 end
 
 if ARGV[1] == "mochila"
-  puts backpack_heuristic.to_s
+  puts deparse backpack_heuristic
 end
 
 heuristica
