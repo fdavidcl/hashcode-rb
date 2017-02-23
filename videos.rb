@@ -3,7 +3,7 @@ require "matrix"
 
 # def score solution
 #   solution.reduce(0) do |
-    
+
 #   end
 # end
 
@@ -20,12 +20,12 @@ dc_latencies, endpoints = (0 ... num_end).map do |i|
   dl, k = lines.shift.split.map &:to_i
 
   caches = Array.new(num_cache)
-  
+
   (0 ... k).each do |c|
     id, lat = lines.shift.split.map &:to_i
     caches[id] = lat
   end
-  
+
   { dc_lat: dl, caches: caches }
 end.map(&:each_value).map(&:to_a).transpose
 
@@ -34,3 +34,10 @@ requests = (0 ... num_req).map do |i|
   { video: video_id, endpoint: endpoint_id, reqs: reqs }
 end
 
+
+
+def heuristica
+  tam_min = sizes.min 
+
+
+end
