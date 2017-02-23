@@ -1,4 +1,11 @@
 #!/usr/bin/env ruby
+require "matrix"
+
+# def score solution
+#   solution.reduce(0) do |
+    
+#   end
+# end
 
 lines = File.readlines(ARGV[0])
 
@@ -9,16 +16,18 @@ cache_capacity = Array.new(num_cache, capacity)
 # video sizes
 sizes = lines.shift.split
 
-endpoints = (0 ... num_end).map do |i|
+dc_latencies, endpoints = (0 ... num_end).map do |i|
   dl, k = lines.shift.split.map &:to_i
 
-  caches = (0 ... k).map do |c|
+  caches = Array.new(num_cache)
+  
+  (0 ... k).each do |c|
     id, lat = lines.shift.split.map &:to_i
-    { id: id, latency: lat }
+    caches[id] = lat
   end
   
   { dc_lat: dl, caches: caches }
-end
+end.map(&:each_value).map(&:to_a).transpose
 
 requests = (0 ... num_req).map do |i|
   video_id, endpoint_id, reqs = lines.shift.split.map &:to_i
