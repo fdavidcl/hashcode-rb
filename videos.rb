@@ -30,7 +30,13 @@ dc_latencies, endpoints = (0 ... num_end).map do |i|
 end.map(&:each_value).map(&:to_a).transpose
 
 gain = (0 ... endpoints.length).map do |i|
-  endpoints[i].map { |e| e - dc_latencies[i] }
+  endpoints[i].map do |e|
+    begin
+      e - dc_latencies[i]
+    rescue
+      nil
+    end
+  end
 end
 
 requests = (0 ... num_req).map do |i|
