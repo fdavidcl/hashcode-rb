@@ -68,10 +68,34 @@ end
 
 
 def backpack_heuristic
-  cache_capacity = Array.new(num_cache, capacity)
+  best_caches = (0 ... @num_cache).to_a.sort_by { |i| -count_caches[i] }
+  # cache_capacity = Array.new(num_cache, capacity)
 
-  cache_capacity.each do |cap|
+  solution = Array.new(num_cache) { Array.new }
+
+  best_cache.each do |cache|
+    min_size = sizes.max
+    cap = capacity
+
+    until cap < min_size # que ya no quepan videos
+      nxt = requests.max_by do |h|
+        if sizes[h[:video]] > cap
+          0
+        else
+          (dc_latencies[h[:endpoint]] - endpoints[h[:endpoint]][cache]) * h[:reqs] / sizes[h[:video]]
+        end
+      end
+
+      solution[cache] << nxt[:video]
+      cap -= sizes[nxt[:video]]
+    end
   end
+
+  solution
+end
+
+if ARGV[1] == "mochila"
+  puts backpack_heuristic.to_s
 end
 
 heuristica
