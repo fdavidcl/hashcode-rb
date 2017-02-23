@@ -7,6 +7,9 @@ require "matrix"
 #   end
 # end
 
+# Lambda max for nil
+imax = ->(a) { a.each_with_index.max_by { |e, i| e.nil? ? 0 : e } }
+
 lines = File.readlines(ARGV[0])
 
 num_vid, num_end, num_req, num_cache, capacity = lines.shift.strip.split.map &:to_i
@@ -48,8 +51,18 @@ count_caches = endpoints.transpose.map { |e| e.reduce(0) { |ac, c| ac + (c.nil? 
 
 
 def heuristica
+  solution = Array.new(num_cache) {Array.new}
+
   tam_min = sizes.min
   cache_capacity = Array.new(num_cache, capacity)
+
+  # Search max in gain, get [row, col] (endpoint, cache)
+  index = imax.(gain.map(&imax)).flatten[1..2].reverse
+  
+
+
+  puts index
+
 
 end
 
@@ -60,3 +73,5 @@ def backpack_heuristic
   cache_capacity.each do |cap|
   end
 end
+
+heuristica
