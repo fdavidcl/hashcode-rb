@@ -12,8 +12,8 @@ require "matrix"
 
 def deparse solution
   used = solution.reject(&:empty?)
-  lines = used.each_with_index.map { |i, a| "#{i} #{a.join " "}\n" }
-  "#{used.length}\n#{lines}"
+  lines = used.each_with_index.map { |a, i| "#{i} #{a.join " "}" }
+  "#{used.length}\n#{lines.join "\n"}"
 end
 
 lines = File.readlines(ARGV[0])
@@ -41,7 +41,7 @@ end.map(&:each_value).map(&:to_a).transpose
 @gain = (0 ... @endpoints.length).map do |i|
   @endpoints[i].map do |e|
     begin
-      e - @dc_latencies[i]
+      @dc_latencies[i] - e
     rescue
       nil
     end
@@ -52,6 +52,8 @@ end
   video_id, endpoint_id, reqs = lines.shift.split.map &:to_i
   { video: video_id, endpoint: endpoint_id, reqs: reqs }
 end
+
+@arequests = @requests.map &:values
 
 @count_caches = @endpoints.transpose.map { |e| e.reduce(0) { |ac, c| ac + (c.nil? ? 0 : 1) } }
 
@@ -76,9 +78,17 @@ def heuristica
 
 end
 
+@objective = @arequests.map do |v, e, r|
+  begin
+    (@dc_latencies[e] - @endpoints[e][cache]) * r / @sizes[v]
+  rescue
+    0
+  end
+end
 
 def backpack_heuristic
   best_caches = (0 ... @num_cache).to_a.sort_by { |i| -@count_caches[i] }
+  puts @count_caches.to_s
   # cache_capacity = Array.new(num_cache, capacity)
 
   solution = Array.new(@num_cache) { Array.new }
@@ -88,22 +98,25 @@ def backpack_heuristic
     cap = @capacity
     taken = Array.new(@num_vid, false)
 
-    #puts cap, min_size
+    puts "Cache #{cache}"
     
     until cap < min_size # que ya no quepan videos
-      nxt = @requests.max_by do |h|
-        if @sizes[h[:video]] > cap || @endpoints[h[:endpoint]][cache].nil? || taken[h[:video]]
+      # 0: video, 1: endpoint, 2: requests
+      nxt = @arequests.max_by do |v, e, r|
+        if @sizes[v] > cap || @endpoints[e][cache].nil? || taken[v]
           0
         else
-          (@dc_latencies[h[:endpoint]] - @endpoints[h[:endpoint]][cache]) * h[:reqs] / @sizes[h[:video]]
+          (@dc_latencies[e] - @endpoints[e][cache]) * r / @sizes[v]
         end
       end
 
+      break if taken[nxt[0]]
+      
       #puts "#{nxt} - #{@sizes[nxt[:video]]} (rem: #{cap})"
 
-      solution[cache] << nxt[:video]
-      cap -= @sizes[nxt[:video]]
-      taken[nxt[:video]] = true
+      solution[cache] << nxt[0]
+      cap -= @sizes[nxt[0]]
+      taken[nxt[0]] = true
     end
   end
 
