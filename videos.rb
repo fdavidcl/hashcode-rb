@@ -17,7 +17,7 @@ lines = File.readlines(ARGV[0])
 @cache_capacity = Array.new(@num_cache, @capacity)
 
 # video sizes
-@sizes = lines.shift.split
+@sizes = lines.shift.split.map &:to_i
 
 @dc_latencies, @endpoints = (0 ... @num_end).map do |i|
   dl, k = lines.shift.split.map &:to_i
@@ -81,6 +81,8 @@ def backpack_heuristic
     min_size = @sizes.max
     cap = @capacity
 
+    puts cap.class, min_size.class
+    
     until cap < min_size # que ya no quepan videos
       nxt = @requests.max_by do |h|
         if @sizes[h[:video]] > cap
