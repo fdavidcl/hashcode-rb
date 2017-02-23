@@ -61,7 +61,7 @@ def heuristica
   index = @imax.(@gain.map(&@imax)).flatten[1..2].reverse
 
   cache_index = index.last
-  avail_videos = (0...num_vid).to_a
+  avail_videos = (0...@num_vid).to_a
 
   while cache_capacity[cache_index] < min
 
