@@ -79,10 +79,12 @@ def heuristica
 end
 
 @objective = @arequests.map do |v, e, r|
-  begin
-    (@dc_latencies[e] - @endpoints[e][cache]) * r / @sizes[v]
-  rescue
-    0
+  (0 ... @num_cache).map do |cache|
+    if @endpoints[e][cache].nil?
+      0
+    else
+      (@dc_latencies[e] - @endpoints[e][cache]) * r / @sizes[v]  
+    end
   end
 end
 
@@ -102,16 +104,17 @@ def backpack_heuristic
     
     until cap < min_size # que ya no quepan videos
       # 0: video, 1: endpoint, 2: requests
-      nxt = @arequests.max_by do |v, e, r|
+      nxt = (0 ... @arequests.length).max_by do |i|
+        v, e, r = @arequests[i]
         if @sizes[v] > cap || @endpoints[e][cache].nil? || taken[v]
           0
         else
-          (@dc_latencies[e] - @endpoints[e][cache]) * r / @sizes[v]
+          @objective[i][cache]
         end
       end
+      nxt = @arequests[nxt]
 
-      break if taken[nxt[0]]
-      
+      break if taken[nxt[0]] || @sizes[nxt[0]] > cap || @endpoints[nxt[1]][cache].nil?
       #puts "#{nxt} - #{@sizes[nxt[:video]]} (rem: #{cap})"
 
       solution[cache] << nxt[0]
